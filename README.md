@@ -14,8 +14,8 @@ pip install -r requirements.txt
 python app.py
 ```
 # structure
-- POST ```{"user":"VZSKY", "pass:"SOMEPASS"}``` to /login return ```{"token":TOKEN}```
-- POST ```{"token":TOKEN}``` to /token return full data
+- POST **json body**```{"user":"VZSKY", "pass:"SOMEPASS"}``` to /login return ```{"token":"TOKEN"}```
+- POST **headers** `` token : TOKEN``` to /token return full data
 
 full data
 ```
@@ -31,4 +31,5 @@ full data
                   }
     }
 ```
+
      
