@@ -7,20 +7,18 @@ app = Flask(__name__)
 mysql = MySQL()
 
 #### APP MYSQL CONFIG
-app.config['MYSQL_DATABASE_USER'] = 'sql12258580'
-app.config['MYSQL_DATABASE_PASSWORD'] = 'IplvI8LUFY'
-app.config['MYSQL_DATABASE_DB'] = 'sql12258580'
-app.config['MYSQL_DATABASE_HOST'] = 'sql12.freemysqlhosting.net'
 
 app.config['SECRET_KEY'] = 'secret'
 
 mysql.init_app(app)
-connection = mysql.connect()
 
 def auth(usr,pwd):
+	connection = mysql.connect()
 	cursor = connection.cursor()
 	cursor.execute("SELECT * FROM User WHERE username='" + usr + "' and password='" + pwd + "'")
 	data = cursor.fetchone()
+	cursor.close()
+	connection.close()
 	if data is None:
 		return jsonify({"status" : "denied"})
 	token = jwt.encode({"user":usr}, app.config['SECRET_KEY'])
@@ -37,20 +35,23 @@ def login():
 
 @app.route('/token', methods=['POST'])
 def tkauth():
-	# try:
+	try:
 		#GATHER ALL DATA + CHECK TOKEN
-	token = request.headers['token']
-	send = jwt.decode(token, app.config['SECRET_KEY'])
-	user = send["user"]
-	cursor = connection.cursor()
-	cursor.execute("SELECT * FROM User WHERE username='" + user + "'")
-	data = cursor.fetchone()
-	send["first"] = data[3] #gather Firstname
-	send["last"] = data[4]	#gather Lastname
-	cursor.execute("SELECT * FROM announce")
-	anc = cursor.fetchall()
-	# except:
-		# return jsonify({"error":"authen error"})
+		token = request.headers['token']
+		send = jwt.decode(token, app.config['SECRET_KEY'])
+		user = send["user"]
+		connection = mysql.connect()
+		cursor = connection.cursor()
+		cursor.execute("SELECT * FROM User WHERE username='" + user + "'")
+		data = cursor.fetchone()
+		send["first"] = data[3] #gather Firstname
+		send["last"] = data[4]	#gather Lastname
+		cursor.execute("SELECT * FROM announce")
+		anc = cursor.fetchall()
+		cursor.close()
+		connection.close()
+	except:
+		return jsonify({"error":"authen error"})
 	return jsonify({"user":send,"announce":anc})
 
 if __name__ == '__main__':
