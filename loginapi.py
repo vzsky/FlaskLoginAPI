@@ -1,14 +1,13 @@
 from flask import Flask, request, jsonify
 from flaskext.mysql import MySQL
 import jwt
+from config import *
 
 app = Flask(__name__)
 
 mysql = MySQL()
 
 #### APP MYSQL CONFIG
-
-app.config['SECRET_KEY'] = 'secret'
 
 mysql.init_app(app)
 
@@ -24,7 +23,7 @@ def auth(usr,pwd):
 	token = jwt.encode({"user":usr}, app.config['SECRET_KEY'])
 	return jsonify({"token" : token.decode("utf-8") })
 
-@app.route('/login', methods=['POST'])
+@app.route('/api/login', methods=['POST'])
 def login():
 	#AUTHEN TOKEN - NO TIMEOUT
 	data = request.json
@@ -33,26 +32,34 @@ def login():
 	token = auth(usr,pwd)
 	return token
 
-@app.route('/token', methods=['POST'])
+@app.route('/api/token', methods=['POST'])
 def tkauth():
 	try:
 		#GATHER ALL DATA + CHECK TOKEN
 		token = request.headers['token']
+		print(1);
 		send = jwt.decode(token, app.config['SECRET_KEY'])
+		print(2);
 		user = send["user"]
 		connection = mysql.connect()
 		cursor = connection.cursor()
+		print(3);
 		cursor.execute("SELECT * FROM User WHERE username='" + user + "'")
+		print(45)
 		data = cursor.fetchone()
-		send["first"] = data[3] #gather Firstname
-		send["last"] = data[4]	#gather Lastname
+		print('')
+		send["first"] = data[2] #gather Firstname
+		send["last"] = data[3]	#gather Lastname
+		print(4);
 		cursor.execute("SELECT * FROM announce")
 		anc = cursor.fetchall()
+		print(5);
 		cursor.close()
 		connection.close()
+		print(6);
 	except:
 		return jsonify({"error":"authen error"})
 	return jsonify({"user":send,"announce":anc})
 
 if __name__ == '__main__':
-	app.run(debug=True)
+	app.run(host='0.0.0.0', port=7000, debug=True)
